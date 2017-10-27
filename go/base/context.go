@@ -203,6 +203,8 @@ type MigrationContext struct {
 
 	knownDBs      map[string]*gosql.DB
 	knownDBsMutex *sync.Mutex
+
+	Log logger
 }
 
 type ContextConfig struct {
@@ -216,6 +218,23 @@ type ContextConfig struct {
 		Replication_Lag_Query string
 		Max_Load              string
 	}
+}
+
+type logger interface {
+	Debug(args ...interface{})
+	Debugf(format string, args ...interface{})
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
+	Notice(args ...interface{})
+	Noticef(format string, args ...interface{})
+	Warning(args ...interface{}) error
+	Warningf(format string, args ...interface{}) error
+	Error(args ...interface{}) error
+	Errorf(format string, args ...interface{}) error
+	Errore(err error) error
+	Fatal(args ...interface{}) error
+	Fatalf(format string, args ...interface{}) error
+	Fatale(err error) error
 }
 
 func NewMigrationContext() *MigrationContext {
@@ -238,6 +257,7 @@ func NewMigrationContext() *MigrationContext {
 		PanicAbort:                          make(chan error),
 		knownDBsMutex:                       &sync.Mutex{},
 		knownDBs:                            make(map[string]*gosql.DB),
+		Log:                                 NewDefaultLogger(),
 	}
 }
 
