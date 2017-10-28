@@ -13,14 +13,13 @@ import (
 	"github.com/github/gh-ost/go/mysql"
 	"github.com/github/gh-ost/go/sql"
 
-	"github.com/outbrain/golib/log"
 	gomysql "github.com/siddontang/go-mysql/mysql"
 	"github.com/siddontang/go-mysql/replication"
 	"golang.org/x/net/context"
 )
 
 type GoMySQLReader struct {
-	connectionConfig         *mysql.ConnectionConfig
+	migrationContext         *base.MigrationContext
 	binlogSyncer             *replication.BinlogSyncer
 	binlogStreamer           *replication.BinlogStreamer
 	currentCoordinates       mysql.BinlogCoordinates
@@ -30,7 +29,7 @@ type GoMySQLReader struct {
 
 func NewGoMySQLReader(migrationContext *base.MigrationContext) (binlogReader *GoMySQLReader, err error) {
 	binlogReader = &GoMySQLReader{
-		connectionConfig:        migrationContext.InspectorConnectionConfig,
+		migrationContext:        migrationContext,
 		currentCoordinates:      mysql.BinlogCoordinates{},
 		currentCoordinatesMutex: &sync.Mutex{},
 		binlogSyncer:            nil,
@@ -42,10 +41,10 @@ func NewGoMySQLReader(migrationContext *base.MigrationContext) (binlogReader *Go
 	binlogSyncerConfig := &replication.BinlogSyncerConfig{
 		ServerID: serverId,
 		Flavor:   "mysql",
-		Host:     binlogReader.connectionConfig.Key.Hostname,
-		Port:     uint16(binlogReader.connectionConfig.Key.Port),
-		User:     binlogReader.connectionConfig.User,
-		Password: binlogReader.connectionConfig.Password,
+		Host:     binlogReader.migrationContext.InspectorConnectionConfig.Key.Hostname,
+		Port:     uint16(binlogReader.migrationContext.InspectorConnectionConfig.Key.Port),
+		User:     binlogReader.migrationContext.InspectorConnectionConfig.User,
+		Password: binlogReader.migrationContext.InspectorConnectionConfig.Password,
 	}
 	binlogReader.binlogSyncer = replication.NewBinlogSyncer(binlogSyncerConfig)
 
@@ -55,11 +54,11 @@ func NewGoMySQLReader(migrationContext *base.MigrationContext) (binlogReader *Go
 // ConnectBinlogStreamer
 func (this *GoMySQLReader) ConnectBinlogStreamer(coordinates mysql.BinlogCoordinates) (err error) {
 	if coordinates.IsEmpty() {
-		return log.Errorf("Emptry coordinates at ConnectBinlogStreamer()")
+		return this.migrationContext.Log.Errorf("Emptry coordinates at ConnectBinlogStreamer()")
 	}
 
 	this.currentCoordinates = coordinates
-	log.Infof("Connecting binlog streamer at %+v", this.currentCoordinates)
+	this.migrationContext.Log.Infof("Connecting binlog streamer at %+v", this.currentCoordinates)
 	// Start sync with sepcified binlog file and position
 	this.binlogStreamer, err = this.binlogSyncer.StartSync(gomysql.Position{this.currentCoordinates.LogFile, uint32(this.currentCoordinates.LogPos)})
 
@@ -76,7 +75,7 @@ func (this *GoMySQLReader) GetCurrentBinlogCoordinates() *mysql.BinlogCoordinate
 // StreamEvents
 func (this *GoMySQLReader) handleRowsEvent(ev *replication.BinlogEvent, rowsEvent *replication.RowsEvent, entriesChannel chan<- *BinlogEntry) error {
 	if this.currentCoordinates.SmallerThanOrEquals(&this.LastAppliedRowsEventHint) {
-		log.Debugf("Skipping handled query at %+v", this.currentCoordinates)
+		this.migrationContext.Log.Debugf("Skipping handled query at %+v", this.currentCoordinates)
 		return nil
 	}
 
@@ -145,14 +144,14 @@ func (this *GoMySQLReader) StreamEvents(canStopStreaming func() bool, entriesCha
 				defer this.currentCoordinatesMutex.Unlock()
 				this.currentCoordinates.LogFile = string(rotateEvent.NextLogName)
 			}()
-			log.Infof("rotate to next log name: %s", rotateEvent.NextLogName)
+			this.migrationContext.Log.Infof("rotate to next log name: %s", rotateEvent.NextLogName)
 		} else if rowsEvent, ok := ev.Event.(*replication.RowsEvent); ok {
 			if err := this.handleRowsEvent(ev, rowsEvent, entriesChannel); err != nil {
 				return err
 			}
 		}
 	}
-	log.Debugf("done streaming events")
+	this.migrationContext.Log.Debugf("done streaming events")
 
 	return nil
 }
