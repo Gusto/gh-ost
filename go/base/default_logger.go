@@ -30,16 +30,6 @@ func (*simpleLogger) Infof(format string, args ...interface{}) {
 	return
 }
 
-func (*simpleLogger) Notice(args ...interface{}) {
-	log.Notice(args[0].(string), args[1:])
-	return
-}
-
-func (*simpleLogger) Noticef(format string, args ...interface{}) {
-	log.Noticef(format, args)
-	return
-}
-
 func (*simpleLogger) Warning(args ...interface{}) error {
 	return log.Warning(args[0].(string), args[1:])
 }

@@ -219,8 +219,6 @@ type logger interface {
 	Debugf(format string, args ...interface{})
 	Info(args ...interface{})
 	Infof(format string, args ...interface{})
-	Notice(args ...interface{})
-	Noticef(format string, args ...interface{})
 	Warning(args ...interface{}) error
 	Warningf(format string, args ...interface{}) error
 	Error(args ...interface{}) error
