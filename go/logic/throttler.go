@@ -460,6 +460,6 @@ func (this *Throttler) throttle(onThrottled func()) {
 }
 
 func (this *Throttler) Teardown() {
-	log.Debugf("Tearing down...")
+	this.migrationContext.Log.Debugf("Tearing down...")
 	atomic.StoreInt64(&this.finishedMigrating, 1)
 }
