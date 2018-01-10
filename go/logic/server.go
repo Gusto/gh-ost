@@ -320,6 +320,7 @@ help                                 # This message
 	case "panic":
 		{
 			err := fmt.Errorf("User commanded 'panic'. I will now panic, without cleanup. PANIC!")
+			// [panic-abort-refactor] TODO This cannnot be bubbled up
 			this.migrationContext.PanicAbort <- err
 			return NoPrintStatusRule, err
 		}
