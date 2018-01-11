@@ -73,6 +73,7 @@ type Migrator struct {
 	ghostTableMigrated         chan bool
 	rowCopyComplete            chan error
 	allEventsUpToLockProcessed chan string
+	done                       chan error
 
 	rowCopyCompleteFlag int64
 	// copyRowsQueue should not be buffered; if buffered some non-damaging but
@@ -93,6 +94,7 @@ func NewMigrator(context *base.MigrationContext) *Migrator {
 		firstThrottlingCollected:   make(chan bool, 3),
 		rowCopyComplete:            make(chan error),
 		allEventsUpToLockProcessed: make(chan string),
+		done: make(chan error),
 
 		copyRowsQueue:          make(chan tableWriteFunc),
 		applyEventsQueue:       make(chan *applyEventStruct, base.MaxEventsBatchSize),
@@ -149,7 +151,7 @@ func (this *Migrator) retryOperation(operation func() error, notFatalHint ...boo
 		// there's an error. Let's try again.
 	}
 	if len(notFatalHint) == 0 {
-		this.migrationContext.PanicAbort <- err
+		this.done <- err
 	}
 	return err
 }
@@ -166,19 +168,23 @@ func (this *Migrator) executeAndThrottleOnError(operation func() error) (err err
 
 // consumeRowCopyComplete blocks on the rowCopyComplete channel once, and then
 // consumes and drops any further incoming events that may be left hanging.
-func (this *Migrator) consumeRowCopyComplete() {
+func (this *Migrator) consumeRowCopyComplete() error {
 	if err := <-this.rowCopyComplete; err != nil {
-		this.migrationContext.PanicAbort <- err
+		// [panic-abort-refactor] This can be bubbled up
+		return err
 	}
 	atomic.StoreInt64(&this.rowCopyCompleteFlag, 1)
 	this.migrationContext.MarkRowCopyEndTime()
 	go func() {
 		for err := range this.rowCopyComplete {
 			if err != nil {
-				this.migrationContext.PanicAbort <- err
+				// [panic-abort-refactor] This cannnot be bubbled up, so we'll send it directly to the done channel
+				this.done <- err
 			}
 		}
 	}()
+
+	return nil
 }
 
 func (this *Migrator) canStopStreaming() bool {
@@ -226,7 +232,10 @@ func (this *Migrator) onChangelogStateEvent(dmlEvent *binlog.BinlogDMLEvent) (er
 // listenOnPanicAbort aborts on abort request
 func (this *Migrator) listenOnPanicAbort() {
 	err := <-this.migrationContext.PanicAbort
-	this.migrationContext.Log.Fatale(err)
+
+	this.migrationContext.Log.Error("Received an error on PanicAbort. Logging and will pass to the done channel.")
+	this.migrationContext.Log.Errore(err)
+	this.done <- err
 }
 
 // validateStatement validates the `alter` statement meets criteria.
@@ -325,7 +334,16 @@ func (this *Migrator) Migrate() (err error) {
 		return err
 	}
 
+	go this.FinalizeMigration()
+
+	migrateErr := <-this.done
+	return migrateErr
+}
+
+func (this *Migrator) FinalizeMigration() {
 	initialLag, _ := this.inspector.getReplicationLag()
+	// [panic-abort-refactor] TODO: do we need to kill this goroutine if the migration gets a
+	//   a message on the done channel and we still cannot proceed?
 	this.migrationContext.Log.Infof("Waiting for ghost table to be migrated. Current lag is %+v", initialLag)
 	<-this.ghostTableMigrated
 	this.migrationContext.Log.Debugf("ghost table migrated")
@@ -334,32 +352,32 @@ func (this *Migrator) Migrate() (err error) {
 	// on master this is always true, of course, and yet it also implies this knowledge
 	// is in the binlogs.
 	if err := this.inspector.inspectOriginalAndGhostTables(); err != nil {
-		return err
+		this.done <- err
 	}
 	// Validation complete! We're good to execute this migration
 	if err := this.hooksExecutor.onValidated(); err != nil {
-		return err
+		this.done <- err
 	}
 
 	if err := this.initiateServer(); err != nil {
-		return err
+		this.done <- err
 	}
 	defer this.server.RemoveSocketFile()
 
 	if err := this.countTableRows(); err != nil {
-		return err
+		this.done <- err
 	}
 	if err := this.addDMLEventsListener(); err != nil {
-		return err
+		this.done <- err
 	}
 	if err := this.applier.ReadMigrationRangeValues(); err != nil {
-		return err
+		this.done <- err
 	}
 	if err := this.initiateThrottler(); err != nil {
-		return err
+		this.done <- err
 	}
 	if err := this.hooksExecutor.onBeforeRowCopy(); err != nil {
-		return err
+		this.done <- err
 	}
 	go this.executeWriteFuncs()
 	go this.iterateChunks()
@@ -367,29 +385,31 @@ func (this *Migrator) Migrate() (err error) {
 	go this.initiateStatus()
 
 	this.migrationContext.Log.Debugf("Operating until row copy is complete")
-	this.consumeRowCopyComplete()
+	if err := this.consumeRowCopyComplete(); err != nil {
+		this.done <- err
+	}
 	this.migrationContext.Log.Infof("Row copy complete")
 	if err := this.hooksExecutor.onRowCopyComplete(); err != nil {
-		return err
+		this.done <- err
 	}
 	this.printStatus(ForcePrintStatusRule)
 
 	if err := this.hooksExecutor.onBeforeCutOver(); err != nil {
-		return err
+		this.done <- err
 	}
 	if err := this.retryOperation(this.cutOver); err != nil {
-		return err
+		this.done <- err
 	}
 	atomic.StoreInt64(&this.migrationContext.CutOverCompleteFlag, 1)
 
 	if err := this.finalCleanup(); err != nil {
-		return nil
+		this.done <- err // TODO: what?????
 	}
 	if err := this.hooksExecutor.onSuccess(); err != nil {
-		return err
+		this.done <- err
 	}
 	this.migrationContext.Log.Infof("Done migrating %s.%s", sql.EscapeName(this.migrationContext.DatabaseName), sql.EscapeName(this.migrationContext.OriginalTableName))
-	return nil
+	this.done <- nil
 }
 
 // ExecOnFailureHook executes the onFailure hook, and this method is provided as the only external
@@ -966,7 +986,8 @@ func (this *Migrator) initiateStreaming() error {
 		this.migrationContext.Log.Debugf("Beginning streaming")
 		err := this.eventsStreamer.StreamEvents(this.canStopStreaming)
 		if err != nil {
-			this.migrationContext.PanicAbort <- err
+			// [panic-abort-refactor] This cannnot be bubbled up, so send it directly to the done channel
+			this.done <- err
 		}
 		this.migrationContext.Log.Debugf("Done streaming")
 	}()
@@ -1270,7 +1291,7 @@ func (this *Migrator) teardown() {
 	}
 
 	if this.throttler != nil {
-		log.Infof("Tearing down throttler")
+		this.migrationContext.Log.Infof("Tearing down throttler")
 		this.throttler.Teardown()
 	}
 }
