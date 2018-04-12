@@ -15,7 +15,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/github/gh-ost/go/base"
+	"github.com/github/gusto/go/base"
 )
 
 type printStatusFunc func(PrintStatusRule, io.Writer)
