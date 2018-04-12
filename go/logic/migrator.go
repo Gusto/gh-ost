@@ -14,10 +14,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/github/gusto/go/base"
-	"github.com/github/gusto/go/binlog"
-	"github.com/github/gusto/go/mysql"
-	"github.com/github/gusto/go/sql"
+	"github.com/gusto/gh-ost/go/base"
+	"github.com/gusto/gh-ost/go/binlog"
+	"github.com/gusto/gh-ost/go/mysql"
+	"github.com/gusto/gh-ost/go/sql"
 )
 
 type ChangelogState string

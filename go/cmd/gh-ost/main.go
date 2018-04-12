@@ -12,8 +12,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/github/gusto/go/base"
-	"github.com/github/gusto/go/logic"
+	"github.com/gusto/gh-ost/go/base"
+	"github.com/gusto/gh-ost/go/logic"
 	"github.com/outbrain/golib/log"
 
 	"golang.org/x/crypto/ssh/terminal"
