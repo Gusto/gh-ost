@@ -43,8 +43,8 @@ type BinlogSyncerConfig struct {
 	// SemiSyncEnabled enables semi-sync or not.
 	SemiSyncEnabled bool
 
-	// RawModeEanbled is for not parsing binlog event.
-	RawModeEanbled bool
+	// RawModeEnabled is for not parsing binlog event.
+	RawModeEnabled bool
 
 	// If not nil, use the provided tls.Config to connect to the database using TLS/SSL.
 	TLSConfig *tls.Config
@@ -54,7 +54,7 @@ type BinlogSyncerConfig struct {
 type BinlogSyncer struct {
 	m sync.RWMutex
 
-	cfg *BinlogSyncerConfig
+	cfg BinlogSyncerConfig
 
 	c *client.Conn
 
@@ -71,14 +71,19 @@ type BinlogSyncer struct {
 }
 
 // NewBinlogSyncer creates the BinlogSyncer with cfg.
-func NewBinlogSyncer(cfg *BinlogSyncerConfig) *BinlogSyncer {
+func NewBinlogSyncer(cfg BinlogSyncerConfig) *BinlogSyncer {
+
+	// Clear the Password to avoid outputing it in log.
+	pass := cfg.Password
+	cfg.Password = ""
 	log.Infof("create BinlogSyncer with config %v", cfg)
+	cfg.Password = pass
 
 	b := new(BinlogSyncer)
 
 	b.cfg = cfg
 	b.parser = NewBinlogParser()
-	b.parser.SetRawMode(b.cfg.RawModeEanbled)
+	b.parser.SetRawMode(b.cfg.RawModeEnabled)
 
 	b.running = false
 	b.ctx, b.cancel = context.WithCancel(context.Background())
