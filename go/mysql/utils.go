@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/github/gh-ost/go/sql"
+	"github.com/gusto/gh-ost/go/sql"
 
 	"github.com/outbrain/golib/log"
 	"github.com/outbrain/golib/sqlutils"

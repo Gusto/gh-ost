@@ -13,7 +13,7 @@ import (
 	"time"
 
 	gosql "database/sql"
-	"github.com/github/gh-ost/go/mysql"
+	"github.com/gusto/gh-ost/go/mysql"
 	"github.com/outbrain/golib/log"
 )
 

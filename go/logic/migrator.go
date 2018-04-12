@@ -14,10 +14,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/github/gh-ost/go/base"
-	"github.com/github/gh-ost/go/binlog"
-	"github.com/github/gh-ost/go/mysql"
-	"github.com/github/gh-ost/go/sql"
+	"github.com/gusto/gh-ost/go/base"
+	"github.com/gusto/gh-ost/go/binlog"
+	"github.com/gusto/gh-ost/go/mysql"
+	"github.com/gusto/gh-ost/go/sql"
 )
 
 type ChangelogState string
@@ -1317,7 +1317,7 @@ func (this *Migrator) teardown() {
 	}
 
 	if this.throttler != nil {
-		log.Infof("Tearing down throttler")
+		this.migrationContext.Log.Infof("Tearing down throttler")
 		this.throttler.Teardown()
 	}
 }

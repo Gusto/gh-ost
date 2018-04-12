@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"sync/atomic"
 
-	"github.com/github/gh-ost/go/base"
+	"github.com/gusto/gh-ost/go/base"
 	"github.com/outbrain/golib/log"
 )
 

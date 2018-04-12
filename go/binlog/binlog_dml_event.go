@@ -7,9 +7,8 @@ package binlog
 
 import (
 	"fmt"
+	"github.com/gusto/gh-ost/go/sql"
 	"strings"
-
-	"github.com/github/gh-ost/go/sql"
 )
 
 type EventDML string

@@ -16,7 +16,7 @@ func (*simpleLogger) Debug(args ...interface{}) {
 }
 
 func (*simpleLogger) Debugf(format string, args ...interface{}) {
-	log.Debugf(format, args)
+	log.Debugf(format, args...)
 	return
 }
 
@@ -26,7 +26,7 @@ func (*simpleLogger) Info(args ...interface{}) {
 }
 
 func (*simpleLogger) Infof(format string, args ...interface{}) {
-	log.Infof(format, args)
+	log.Infof(format, args...)
 	return
 }
 
@@ -35,7 +35,7 @@ func (*simpleLogger) Warning(args ...interface{}) error {
 }
 
 func (*simpleLogger) Warningf(format string, args ...interface{}) error {
-	return log.Warningf(format, args)
+	return log.Warningf(format, args...)
 }
 
 func (*simpleLogger) Error(args ...interface{}) error {
@@ -43,7 +43,7 @@ func (*simpleLogger) Error(args ...interface{}) error {
 }
 
 func (*simpleLogger) Errorf(format string, args ...interface{}) error {
-	return log.Errorf(format, args)
+	return log.Errorf(format, args...)
 }
 
 func (*simpleLogger) Errore(err error) error {
@@ -55,7 +55,7 @@ func (*simpleLogger) Fatal(args ...interface{}) error {
 }
 
 func (*simpleLogger) Fatalf(format string, args ...interface{}) error {
-	return log.Fatalf(format, args)
+	return log.Fatalf(format, args...)
 }
 
 func (*simpleLogger) Fatale(err error) error {

@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/github/gh-ost/go/base"
-	"github.com/github/gh-ost/go/binlog"
-	"github.com/github/gh-ost/go/mysql"
+	"github.com/gusto/gh-ost/go/base"
+	"github.com/gusto/gh-ost/go/binlog"
+	"github.com/gusto/gh-ost/go/mysql"
 
 	"github.com/outbrain/golib/sqlutils"
 )
