@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/github/gh-ost/go/base"
-	"github.com/github/gh-ost/go/mysql"
-	"github.com/github/gh-ost/go/sql"
+	"github.com/github/gusto/go/base"
+	"github.com/github/gusto/go/mysql"
+	"github.com/github/gusto/go/sql"
 )
 
 var (

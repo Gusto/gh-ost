@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/github/gh-ost/go/base"
-	"github.com/github/gh-ost/go/mysql"
-	"github.com/github/gh-ost/go/sql"
+	"github.com/github/gusto/go/base"
+	"github.com/github/gusto/go/mysql"
+	"github.com/github/gusto/go/sql"
 
 	gomysql "github.com/siddontang/go-mysql/mysql"
 	"github.com/siddontang/go-mysql/replication"
