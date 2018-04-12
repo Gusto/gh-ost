@@ -13,9 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/github/gusto/go/base"
-	"github.com/github/gusto/go/mysql"
-	"github.com/github/gusto/go/sql"
+	"github.com/gusto/gh-ost/go/base"
+	"github.com/gusto/gh-ost/go/mysql"
+	"github.com/gusto/gh-ost/go/sql"
 
 	"github.com/outbrain/golib/sqlutils"
 )

@@ -16,8 +16,8 @@ import (
 
 	"github.com/satori/go.uuid"
 
-	"github.com/github/gusto/go/mysql"
-	"github.com/github/gusto/go/sql"
+	"github.com/gusto/gh-ost/go/mysql"
+	"github.com/gusto/gh-ost/go/sql"
 
 	"gopkg.in/gcfg.v1"
 	gcfgscanner "gopkg.in/gcfg.v1/scanner"

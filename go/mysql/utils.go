@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/github/gusto/go/sql"
+	"github.com/gusto/gh-ost/go/sql"
 
 	"github.com/outbrain/golib/log"
 	"github.com/outbrain/golib/sqlutils"

@@ -7,7 +7,7 @@ package binlog
 
 import (
 	"fmt"
-	"github.com/github/gusto/go/sql"
+	"github.com/gusto/gh-ost/go/sql"
 	"strings"
 )
 
