@@ -38,7 +38,7 @@ func NewGoMySQLReader(migrationContext *base.MigrationContext) (binlogReader *Go
 
 	serverId := uint32(migrationContext.ReplicaServerId)
 
-	binlogSyncerConfig := &replication.BinlogSyncerConfig{
+	binlogSyncerConfig := replication.BinlogSyncerConfig{
 		ServerID: serverId,
 		Flavor:   "mysql",
 		Host:     binlogReader.migrationContext.InspectorConnectionConfig.Key.Hostname,
