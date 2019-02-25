@@ -236,6 +236,8 @@ type logger interface {
 func NewMigrationContext() *MigrationContext {
 	return &MigrationContext{
 		Uuid:                                uuid.NewV4().String(),
+		CountTableRows:                      true,
+		ConcurrentCountTableRows:            true,
 		defaultNumRetries:                   60,
 		ChunkSize:                           1000,
 		InspectorConnectionConfig:           mysql.NewConnectionConfig(),
