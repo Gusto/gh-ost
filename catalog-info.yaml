@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: gh-ost
+  description: Forked version of the public gh-ost library, used for schema migrations [To be deprecated]
+  tags:
+    - golang
+    - bash
+  annotations:
+    github.com/project-slug: gusto/gh-ost
+spec:
+  type: library
+  owner: dex
+  lifecycle: production
+  system: flight-deck
+  dependsOn: []
